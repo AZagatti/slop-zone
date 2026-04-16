@@ -61,8 +61,6 @@ export default component$(() => {
   const activeEventDisplay = useSignal<ActiveEvent | null>(null);
   const eventTimer = useSignal(0);
   const autoSaveCounter = useSignal(0);
-  let particleId = 0;
-
   useVisibleTask$(() => {
     try {
       const saved = localStorage.getItem(SAVE_KEY);
@@ -149,7 +147,7 @@ export default component$(() => {
       clickScale.value = 1;
     }, 80);
     playClick();
-    const id = particleId++;
+    const id = Date.now();
     const target = e.target as HTMLElement;
     const rect = target.getBoundingClientRect();
     clickParticles.value = [

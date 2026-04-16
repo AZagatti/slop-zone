@@ -1,6 +1,9 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
   "extends": ["ultracite/biome/core", "ultracite/biome/qwik"],
+  "files": {
+    "includes": ["!adapters", "!vercel.json", "!README.md"]
+  },
   "linter": {
     "rules": {
       "correctness": {

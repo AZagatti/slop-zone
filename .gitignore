@@ -3,6 +3,7 @@
 /lib
 /lib-types
 /server
+.vercel
 
 # Development
 node_modules
@@ -46,3 +47,5 @@ tmp/
 # Yarn
 .yarn/*
 !.yarn/releases
+
+# Vercel
