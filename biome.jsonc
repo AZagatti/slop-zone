@@ -1,0 +1,51 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+  "extends": ["ultracite/biome/core", "ultracite/biome/qwik"],
+  "linter": {
+    "rules": {
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "noUnusedFunctionParameters": "warn",
+        "noQwikUseVisibleTask": "off"
+      },
+      "suspicious": {
+        "noUnknownAtRules": "off",
+        "noExplicitAny": "warn"
+      },
+      "nursery": {
+        "useSortedClasses": "off"
+      },
+      "a11y": {
+        "useButtonType": "off",
+        "noSvgWithoutTitle": "off"
+      },
+      "style": {
+        "useTemplate": "warn"
+      },
+      "performance": {
+        "useTopLevelRegex": "off"
+      }
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on"
+        },
+        "useSortedProperties": {
+          "level": "off"
+        },
+        "useSortedAttributes": {
+          "level": "off"
+        }
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "lineWidth": 120
+    }
+  }
+}

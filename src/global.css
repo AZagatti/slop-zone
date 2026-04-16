@@ -1,0 +1,95 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #0f0f1a;
+  --color-surface: #1a1a2e;
+  --color-purple: #8b5cf6;
+  --color-pink: #ec4899;
+  --color-cyan: #22d3ee;
+  --color-yellow: #facc15;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-purple) var(--color-bg);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: white;
+  font-family: "Inter", sans-serif;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      var(--color-purple),
+      var(--color-pink),
+      var(--color-cyan)
+    );
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+
+  .glow-border {
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+
+  .glow-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      var(--color-purple),
+      var(--color-pink),
+      var(--color-cyan)
+    );
+    z-index: -1;
+    animation: gradient-x 3s ease infinite;
+  }
+
+  .slop-card {
+    @apply bg-slop-surface rounded-2xl p-6 border border-white/10 backdrop-blur-sm;
+  }
+
+  .slop-btn {
+    @apply px-6 py-3 rounded-xl font-bold text-white transition-all duration-200 active:scale-95;
+    background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+  }
+
+  .slop-btn:hover {
+    @apply shadow-lg;
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .comic-title {
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+  }
+
+  .tilt-1 {
+    transform: rotate(-1deg);
+  }
+  .tilt-2 {
+    transform: rotate(1.5deg);
+  }
+  .tilt-3 {
+    transform: rotate(-2deg);
+  }
+
+  .animate-gradient-bg {
+    background-size: 300% 300%;
+    animation: gradient-x 4s ease infinite;
+  }
+}
