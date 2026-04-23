@@ -28,6 +28,34 @@ import { playBigWin, playClick, playSuccess } from "../../utils/sounds";
 
 const SAVE_KEY = "slop-zone-save";
 
+const DEVTOOLS_MESSAGES = [
+  "🚨 Our SEO team detected you're inspecting! That's a breach of our synergies!",
+  "👀 Peeking at our proprietary slop algorithm? Bold move.",
+  "🔒 You found the secret: there is no secret. Just slop.",
+  "📊 Our KPIs show you're 300% more likely to be a developer right now.",
+  "🤖 Fun fact: this entire site was vibe-coded. Yes, even this message.",
+  "💼 LEAKED: Q3 roadmap is 'more slop, less cowbell'",
+  "🐛 That's not a bug, that's a feature we haven't pivotized yet.",
+  "🫠 You opened dev tools and all you got was this lousy console message.",
+];
+
+const HR_DEBUFF_MESSAGES = [
+  "📋 Mandatory HR Training: Your clicking velocity triggered a wellness check.",
+  "🕵️ Our AI detected 'suspicious productivity'. A manager has been notified.",
+  "⚖️ Your slop output has been flagged for a 'routine compliance review'.",
+  "📞 Your manager would like to 'have a quick chat' about your KPIs.",
+  "🗓️ You've been enrolled in a mandatory 'Synergy & Ethics' webinar.",
+  "📮 An anonymous tip was submitted to the Slop Ethics Hotline.",
+  "🏢 Your slop has been temporarily reallocated to 'team building'.",
+  "📎 Per company policy, automated slop generation requires VP approval.",
+];
+
+const DEBUFF_SPS_MULT = 0.1;
+const DEBUFF_DURATION = 30;
+const BOT_CLICK_THRESHOLD = 15;
+const BOT_VARIANCE_THRESHOLD = 5;
+const BOT_SAMPLE_SIZE = 20;
+
 function getEraButtonEmoji(eraId: string) {
   if (eraId === "enshittification") {
     return "💀";
@@ -61,6 +89,9 @@ export default component$(() => {
   const activeEventDisplay = useSignal<ActiveEvent | null>(null);
   const eventTimer = useSignal(0);
   const autoSaveCounter = useSignal(0);
+  const hrDebuff = useSignal(false);
+  const hrDebuffTimer = useSignal(0);
+  const hrDebuffMessage = useSignal("");
   useVisibleTask$(() => {
     try {
       const saved = localStorage.getItem(SAVE_KEY);
@@ -82,9 +113,59 @@ export default component$(() => {
   });
 
   useVisibleTask$(({ cleanup }) => {
+    let eventCountdownId: ReturnType<typeof setInterval> | null = null;
+
+    const clickTimestamps: number[] = [];
+
+    const triggerHrDebuff = () => {
+      if (hrDebuff.value) return;
+      hrDebuff.value = true;
+      hrDebuffTimer.value = DEBUFF_DURATION;
+      hrDebuffMessage.value = HR_DEBUFF_MESSAGES[Math.floor(Math.random() * HR_DEBUFF_MESSAGES.length)];
+      const debuffCountdown = setInterval(() => {
+        hrDebuffTimer.value--;
+        if (hrDebuffTimer.value <= 0) {
+          hrDebuff.value = false;
+          hrDebuffMessage.value = "";
+          clearInterval(debuffCountdown);
+        }
+      }, 1000);
+    };
+
+    (window as unknown as Record<string, unknown>).__slopBotCheck = (interval: number) => {
+      clickTimestamps.push(interval);
+      if (clickTimestamps.length > BOT_SAMPLE_SIZE) clickTimestamps.shift();
+      if (clickTimestamps.length >= BOT_SAMPLE_SIZE) {
+        const mean = clickTimestamps.reduce((a, b) => a + b, 0) / clickTimestamps.length;
+        const variance = clickTimestamps.reduce((a, b) => a + (b - mean) ** 2, 0) / clickTimestamps.length;
+        if (mean < BOT_CLICK_THRESHOLD && variance < BOT_VARIANCE_THRESHOLD) {
+          clickTimestamps.length = 0;
+          triggerHrDebuff();
+        }
+      }
+    };
+
+    const devtoolsCheck = setInterval(() => {
+      const threshold = 160;
+      if (
+        window.outerWidth - window.innerWidth > threshold ||
+        window.outerHeight - window.innerHeight > threshold
+      ) {
+        const msg = DEVTOOLS_MESSAGES[Math.floor(Math.random() * DEVTOOLS_MESSAGES.length)];
+        console.log(`%c${msg}`, "font-size: 16px; color: #8B5CF6; font-family: Comic Sans MS, cursive;");
+        clearInterval(devtoolsCheck);
+      }
+    }, 2000);
+    cleanup(() => clearInterval(devtoolsCheck));
+
     const tick = setInterval(() => {
       const state = game.value;
-      handleTick(state, 0.1);
+      const gained = handleTick(state, 0.1);
+      if (hrDebuff.value) {
+        const penalty = gained * (1 - DEBUFF_SPS_MULT);
+        state.slopCount -= penalty;
+        state.totalSlopGenerated -= penalty;
+      }
       autoSaveCounter.value++;
       if (autoSaveCounter.value >= 50) {
         autoSaveCounter.value = 0;
@@ -95,7 +176,7 @@ export default component$(() => {
           // storage full
         }
       }
-      game.value = { ...state };
+      game.value = state;
 
       const newA = checkAchievements(state);
       if (newA.length > 0) {
@@ -108,37 +189,48 @@ export default component$(() => {
           newAchievementPopup.value = null;
         }, 3000);
       }
-    }, 100);
-    cleanup(() => clearInterval(tick));
-  });
 
-  useVisibleTask$(({ cleanup }) => {
-    const eventInterval = setInterval(() => {
-      if (activeEventDisplay.value) {
-        return;
-      }
-      if (Math.random() > 0.7) {
-        const event = generateRandomEvent(game.value);
+      if (!activeEventDisplay.value && Math.random() > 0.993) {
+        const event = generateRandomEvent(state);
         activeEventDisplay.value = event;
         eventTimer.value = event.duration;
-        const countdown = setInterval(() => {
+        if (eventCountdownId) clearInterval(eventCountdownId);
+        eventCountdownId = setInterval(() => {
           eventTimer.value--;
           if (eventTimer.value <= 0) {
             activeEventDisplay.value = null;
-            clearInterval(countdown);
+            if (eventCountdownId) {
+              clearInterval(eventCountdownId);
+              eventCountdownId = null;
+            }
           }
         }, 1000);
       }
-    }, 30_000);
-    cleanup(() => clearInterval(eventInterval));
+    }, 100);
+    cleanup(() => {
+      clearInterval(tick);
+      if (eventCountdownId) clearInterval(eventCountdownId);
+      delete (window as unknown as Record<string, unknown>).__slopBotCheck;
+    });
   });
 
   const doClick = $((e: QwikMouseEvent) => {
+    const now = Date.now();
+    const w = window as unknown as Record<string, number>;
+    const checkBot = (window as unknown as Record<string, unknown>).__slopBotCheck as
+      | ((i: number) => void)
+      | undefined;
+    if (checkBot && w.__slopLastClick) {
+      checkBot(now - w.__slopLastClick);
+    }
+    w.__slopLastClick = now;
+
     const state = game.value;
+    const debuffMult = hrDebuff.value ? DEBUFF_SPS_MULT : 1;
     const eventMult = activeEventDisplay.value?.multiplier || 1;
     const brandMult = 1 + state.brandEquity * 0.02;
     const confidence = getStakeholderConfidence(state);
-    const gained = state.slopPerClick * brandMult * confidence * eventMult;
+    const gained = state.slopPerClick * brandMult * confidence * eventMult * debuffMult;
     state.slopCount += gained;
     state.totalSlopGenerated += gained;
     state.totalClicks++;
@@ -150,14 +242,15 @@ export default component$(() => {
     const id = Date.now();
     const target = e.target as HTMLElement;
     const rect = target.getBoundingClientRect();
+    const particles = clickParticles.value;
     clickParticles.value = [
-      ...clickParticles.value,
+      ...particles.length > 20 ? particles.slice(-10) : particles,
       { id, x: e.clientX - rect.left, y: e.clientY - rect.top, amount: gained },
     ];
     setTimeout(() => {
       clickParticles.value = clickParticles.value.filter((p) => p.id !== id);
     }, 800);
-    game.value = { ...state };
+    game.value = state;
   });
 
   const doBuy = $((index: number) => {
@@ -169,7 +262,7 @@ export default component$(() => {
       if (state.generators[index].owned >= 10 && state.generators[index].owned - result.bought < 10) {
         fireConfettiSmall();
       }
-      game.value = { ...state };
+      game.value = state;
     }
   });
 
@@ -183,7 +276,7 @@ export default component$(() => {
     playBigWin();
     fireConfettiSmall();
     showRebrand.value = false;
-    game.value = { ...state };
+    game.value = state;
   });
 
   const closeOffline = $(() => {
@@ -196,7 +289,8 @@ export default component$(() => {
   });
 
   const state = game.value;
-  const sps = calculateSPS(state);
+  const debuffMult = hrDebuff.value ? DEBUFF_SPS_MULT : 1;
+  const sps = calculateSPS(state) * debuffMult;
   const era = getEra(state.totalSlopGenerated);
   const brandGain = calculateBrandEquityGain(state);
   const confidence = getStakeholderConfidence(state);
@@ -239,6 +333,15 @@ export default component$(() => {
             🔥 TRENDING: {activeEventDisplay.value.type.toUpperCase()} ×{activeEventDisplay.value.multiplier}
           </span>
           <span class="text-xs text-white/40 ml-2">{eventTimer.value}s</span>
+        </div>
+      )}
+
+      {hrDebuff.value && (
+        <div class="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-red-900/40 to-slop-pink/30 backdrop-blur-xl border-b border-red-500/40 py-2 px-4 text-center">
+          <span class="font-bold text-red-400 text-xs sm:text-sm">{hrDebuffMessage.value}</span>
+          <div class="text-xs text-white/30 mt-0.5">
+            SPS reduced to {DEBUFF_SPS_MULT * 100}% — Review ends in {hrDebuffTimer.value}s
+          </div>
         </div>
       )}
 
