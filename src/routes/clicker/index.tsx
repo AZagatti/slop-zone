@@ -176,7 +176,7 @@ export default component$(() => {
           // storage full
         }
       }
-      game.value = state;
+      game.value = { ...state };
 
       const newA = checkAchievements(state);
       if (newA.length > 0) {
@@ -250,7 +250,7 @@ export default component$(() => {
     setTimeout(() => {
       clickParticles.value = clickParticles.value.filter((p) => p.id !== id);
     }, 800);
-    game.value = state;
+    game.value = { ...state };
   });
 
   const doBuy = $((index: number) => {
@@ -262,7 +262,7 @@ export default component$(() => {
       if (state.generators[index].owned >= 10 && state.generators[index].owned - result.bought < 10) {
         fireConfettiSmall();
       }
-      game.value = state;
+      game.value = { ...state };
     }
   });
 
@@ -276,7 +276,7 @@ export default component$(() => {
     playBigWin();
     fireConfettiSmall();
     showRebrand.value = false;
-    game.value = state;
+    game.value = { ...state };
   });
 
   const closeOffline = $(() => {
